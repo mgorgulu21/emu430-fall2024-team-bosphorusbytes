@@ -1,9 +1,426 @@
 ---
 title: "Analysis"
+format:
+  html: default
+  pdf:
+    colorlinks: true
+    papersize: a4
+    fontsize: 11pt
+    margin-left: 2cm
+    margin-right: 2cm
+    margin-top: 2cm
+    margin-bottom: 2cm
 ---
 
-About this site
-
-```{r}
-1 + 1
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE, message = FALSE, echo = TRUE,
+  fig.align = "center", fig.width = 8, fig.height = 5
+)
 ```
+
+```{r load-data, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(scales)
+library(sf)
+library(leaflet)
+library(knitr)
+library(kableExtra)
+library(tidytext)
+library(viridis)
+library(broom)
+
+load("data/istanbul_airbnb.RData")
+```
+
+## Key Takeaways
+
+- 🗺️ **Listing concentration is extreme:** Beyoğlu, Şişli, and Fatih together account for over 45% of all Istanbul listings, while most outer districts have fewer than 100 listings.
+- 💰 **Location and room type dominate pricing:** Entire-home listings in central districts cost 2–3× more than private rooms in peripheral areas; superhost status adds ~10–15%.
+- 📉 **COVID-19 left a deep scar:** Monthly review counts fell ~85% between February and May 2020 and did not fully recover until mid-2022.
+- 🏠 **Professional hosts dominate supply:** The top 5% of hosts by listing count control over 30% of total listings.
+- 🔤 **Location is what guests talk about most:** The words *location*, *clean*, and *walk* dominate reviews in central districts.
+
+---
+
+## 1. Geographic Distribution of Listings
+
+### 1.1 Interactive Map
+
+```{r map-listings}
+pal <- colorFactor(
+  palette = c("#e63946", "#457b9d", "#2a9d8f", "#e9c46a"),
+  domain  = listings$room_type
+)
+
+leaflet(listings) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addCircleMarkers(
+    lng         = ~longitude,
+    lat         = ~latitude,
+    color       = ~pal(room_type),
+    radius      = 2,
+    stroke      = FALSE,
+    fillOpacity = 0.6,
+    popup       = ~paste0("<b>", name, "</b><br>",
+                          room_type, "<br>$", price, "/night")
+  ) %>%
+  addLegend("bottomright", pal = pal, values = ~room_type,
+            title = "Room Type", opacity = 0.9)
+```
+
+Listings cluster tightly around the Bosphorus shoreline, with the densest concentration on the historic peninsula and in Beyoğlu.
+
+### 1.2 Top 15 Districts by Listing Count
+
+```{r listings-by-district}
+listings %>%
+  count(neighbourhood_cleansed, sort = TRUE) %>%
+  slice_head(n = 15) %>%
+  mutate(neighbourhood_cleansed = fct_reorder(neighbourhood_cleansed, n)) %>%
+  ggplot(aes(x = n, y = neighbourhood_cleansed, fill = n)) +
+  geom_col(show.legend = FALSE) +
+  scale_fill_viridis_c(option = "C") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title    = "Top 15 Districts by Airbnb Listing Count",
+    subtitle = "Beyoğlu alone accounts for roughly 20% of all listings",
+    x = "Number of Listings", y = NULL,
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+Beyoğlu dominates with roughly 20% of all listings. The drop-off after the top five districts is steep, confirming that the platform is spatially concentrated in tourist-heavy neighbourhoods.
+
+### 1.3 Choropleth: Listing Density
+
+```{r choropleth}
+listing_counts <- listings %>%
+  count(neighbourhood_cleansed, name = "n_listings")
+
+map_data <- neighbourhoods_geo %>%
+  left_join(listing_counts, by = c("neighbourhood" = "neighbourhood_cleansed"))
+
+ggplot(map_data) +
+  geom_sf(aes(fill = n_listings), colour = "white", linewidth = 0.3) +
+  scale_fill_viridis_c(option = "C", na.value = "grey90",
+                       labels = comma, name = "Listings") +
+  labs(
+    title   = "Airbnb Listing Density Across Istanbul Districts",
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_void(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+---
+
+## 2. Price Analysis
+
+### 2.1 Price Distribution
+
+```{r price-dist}
+listings %>%
+  ggplot(aes(x = price)) +
+  geom_histogram(bins = 60, fill = "#457b9d", colour = "white") +
+  scale_x_log10(labels = dollar) +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Distribution of Nightly Prices (log scale)",
+    subtitle = "Most listings are priced between $20 and $200 per night",
+    x = "Price per Night (USD, log scale)", y = "Count",
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+The distribution is right-skewed, with a median around \$50–70/night. On a log scale the distribution becomes near-normal, confirming that extreme outliers inflate the mean.
+
+### 2.2 Price by Room Type
+
+```{r price-by-room}
+listings %>%
+  ggplot(aes(x = room_type, y = price, fill = room_type)) +
+  geom_boxplot(outlier.alpha = 0.2, show.legend = FALSE) +
+  scale_y_log10(labels = dollar) +
+  scale_fill_manual(values = c("#e63946", "#457b9d", "#2a9d8f", "#e9c46a")) +
+  labs(
+    title    = "Nightly Price by Room Type",
+    subtitle = "Entire homes command roughly 2× the price of private rooms",
+    x = NULL, y = "Price per Night (USD, log scale)",
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+### 2.3 Top 15 Districts by Median Price
+
+```{r price-by-neighbourhood}
+listings %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarise(median_price = median(price, na.rm = TRUE), n = n()) %>%
+  filter(n >= 50) %>%
+  slice_max(median_price, n = 15) %>%
+  mutate(neighbourhood_cleansed = fct_reorder(neighbourhood_cleansed, median_price)) %>%
+  ggplot(aes(x = median_price, y = neighbourhood_cleansed, fill = median_price)) +
+  geom_col(show.legend = FALSE) +
+  scale_fill_viridis_c(option = "B") +
+  scale_x_continuous(labels = dollar) +
+  labs(
+    title    = "Top 15 Districts by Median Nightly Price",
+    subtitle = "Waterfront and upscale districts lead on price",
+    x = "Median Price (USD)", y = NULL,
+    caption = "Source: Inside Airbnb — Istanbul (districts with ≥50 listings)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+### 2.4 Regression: Price Drivers
+
+We fit a log-linear regression to identify the key predictors of nightly price.
+
+```{r regression}
+model_data <- listings %>%
+  filter(!is.na(price), !is.na(review_scores_rating),
+         !is.na(host_is_superhost), !is.na(accommodates)) %>%
+  mutate(
+    log_price  = log(price),
+    room_type  = factor(room_type,
+                        levels = c("Shared room", "Private room",
+                                   "Hotel room", "Entire home/apt")),
+    is_central = neighbourhood_cleansed %in%
+                   c("Beyoğlu", "Şişli", "Fatih", "Beşiktaş", "Kadıköy")
+  )
+
+model <- lm(log_price ~ room_type + host_is_superhost +
+              review_scores_rating + accommodates + is_central,
+            data = model_data)
+
+tidy(model, conf.int = TRUE) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(term = str_replace_all(term, c(
+    "room_typePrivate room"    = "Private Room",
+    "room_typeHotel room"      = "Hotel Room",
+    "room_typeEntire home/apt" = "Entire Home/Apt",
+    "host_is_superhostTRUE"   = "Superhost",
+    "review_scores_rating"    = "Review Score",
+    "accommodates"            = "Guests Accommodated",
+    "is_centralTRUE"          = "Central District"
+  ))) %>%
+  ggplot(aes(x = estimate, y = fct_reorder(term, estimate),
+             colour = estimate > 0)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0.2) +
+  geom_point(size = 3) +
+  scale_colour_manual(values = c("#e63946", "#2a9d8f"), guide = "none") +
+  labs(
+    title    = "Regression Coefficients: Predictors of Log(Price)",
+    subtitle = "Ref: Shared room, non-superhost, peripheral district",
+    x = "Coefficient (log scale)", y = NULL,
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+Being in a central district and listing an entire home are the two strongest positive predictors. Review scores matter, but less than most hosts might expect.
+
+---
+
+## 3. Temporal Analysis: Growth & COVID-19
+
+Reviews are a reliable proxy for bookings — a review can only be left after a completed stay.
+
+```{r review-timeseries}
+reviews %>%
+  filter(year >= 2015, year <= 2024) %>%
+  count(year_month = floor_date(date, "month")) %>%
+  ggplot(aes(x = year_month, y = n)) +
+  geom_line(colour = "#457b9d", linewidth = 1) +
+  geom_area(fill = "#457b9d", alpha = 0.2) +
+  annotate("rect",
+           xmin = as.Date("2020-03-01"), xmax = as.Date("2021-06-01"),
+           ymin = -Inf, ymax = Inf, alpha = 0.15, fill = "#e63946") +
+  annotate("text", x = as.Date("2020-09-01"), y = 4000,
+           label = "COVID-19", colour = "#e63946", fontface = "bold", size = 3.5) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(labels = comma) +
+  labs(
+    title    = "Monthly Review Count — Istanbul Airbnb (2015–2024)",
+    subtitle = "COVID-19 caused an ~85% collapse; full recovery by mid-2022",
+    x = NULL, y = "Number of Reviews",
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+### 3.1 Seasonal Patterns
+
+```{r seasonality}
+reviews %>%
+  filter(year %in% c(2018, 2019, 2022, 2023)) %>%
+  count(year, month_num = month(date)) %>%
+  mutate(year = factor(year)) %>%
+  ggplot(aes(x = month_num, y = n, colour = year, group = year)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  scale_y_continuous(labels = comma) +
+  scale_colour_viridis_d(option = "D") +
+  labs(
+    title    = "Seasonal Review Patterns (Selected Years)",
+    subtitle = "July–August peak is consistent across all years",
+    x = NULL, y = "Reviews", colour = "Year",
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+Istanbul's Airbnb market peaks sharply in summer (July–August) and troughs in January–February — consistent with the city's tourism calendar.
+
+---
+
+## 4. Host Profile Analysis
+
+### 4.1 Single vs Multi-Listing Hosts
+
+```{r host-profile}
+host_summary <- listings %>%
+  group_by(host_id) %>%
+  summarise(n_listings = n_distinct(id)) %>%
+  mutate(host_type = case_when(
+    n_listings == 1  ~ "Single listing",
+    n_listings <= 4  ~ "2–4 listings",
+    n_listings <= 9  ~ "5–9 listings",
+    TRUE             ~ "10+ listings"
+  ),
+  host_type = factor(host_type,
+                     levels = c("Single listing", "2–4 listings",
+                                "5–9 listings", "10+ listings")))
+
+# Share of hosts
+p1 <- host_summary %>%
+  count(host_type) %>%
+  mutate(pct = n / sum(n)) %>%
+  ggplot(aes(x = host_type, y = pct, fill = host_type)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = percent(pct, accuracy = 0.1)), vjust = -0.4) +
+  scale_y_continuous(labels = percent, limits = c(0, 0.8)) +
+  scale_fill_viridis_d(option = "C") +
+  labs(title = "Share of Hosts", x = NULL, y = NULL) +
+  theme_minimal(base_size = 11)
+
+# Share of listings controlled
+p2 <- listings %>%
+  left_join(host_summary, by = "host_id") %>%
+  count(host_type) %>%
+  mutate(pct = n / sum(n)) %>%
+  ggplot(aes(x = host_type, y = pct, fill = host_type)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = percent(pct, accuracy = 0.1)), vjust = -0.4) +
+  scale_y_continuous(labels = percent, limits = c(0, 0.55)) +
+  scale_fill_viridis_d(option = "C") +
+  labs(title = "Share of Total Listings Controlled", x = NULL, y = NULL) +
+  theme_minimal(base_size = 11)
+
+gridExtra::grid.arrange(p1, p2, ncol = 2,
+  top = "Single-Listing Hosts Are the Majority, But Multi-Listers Control Supply")
+```
+
+Although single-listing hosts outnumber multi-listing operators, a small group with 10+ listings controls a disproportionately large share of available accommodation — a hallmark of platform commercialisation seen in other major cities worldwide.
+
+---
+
+## 5. Tourism Pressure Index
+
+We construct a **Tourism Pressure Index (TPI)** per district by combining three min-max-scaled components:
+
+1. **Listing density** — share of city-wide listings
+2. **Entire-home ratio** — share of listings that are entire homes (housing removed from long-term use)
+3. **Price level** — median nightly price
+
+```{r tpi}
+tpi_data <- listings %>%
+  group_by(neighbourhood_cleansed) %>%
+  summarise(
+    n_listings   = n(),
+    entire_ratio = mean(room_type == "Entire home/apt", na.rm = TRUE),
+    median_price = median(price, na.rm = TRUE)
+  ) %>%
+  filter(n_listings >= 20) %>%
+  mutate(
+    across(c(n_listings, entire_ratio, median_price),
+           ~ (. - min(.)) / (max(.) - min(.)),
+           .names = "{.col}_scaled"),
+    TPI = (n_listings_scaled + entire_ratio_scaled + median_price_scaled) / 3
+  )
+
+tpi_data %>%
+  slice_max(TPI, n = 15) %>%
+  mutate(neighbourhood_cleansed = fct_reorder(neighbourhood_cleansed, TPI)) %>%
+  ggplot(aes(x = TPI, y = neighbourhood_cleansed, fill = TPI)) +
+  geom_col(show.legend = FALSE) +
+  scale_fill_viridis_c(option = "A", direction = -1) +
+  scale_x_continuous(limits = c(0, 1)) +
+  labs(
+    title    = "Tourism Pressure Index — Top 15 Istanbul Districts",
+    subtitle = "Equal-weight average of listing density, entire-home ratio, and price level",
+    x = "TPI (0–1)", y = NULL,
+    caption = "Source: Inside Airbnb — Istanbul"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+Beyoğlu, Şişli, and Beşiktaş top the TPI, reflecting their combination of high listing counts, a large proportion of entire-home rentals, and elevated prices — precisely the districts where housing-affordability concerns are most acute.
+
+---
+
+## 6. Review Text Analysis
+
+We tokenise English-language reviews to understand what guests value most.
+
+```{r text-analysis}
+review_words <- reviews %>%
+  filter(!is.na(comments)) %>%
+  unnest_tokens(word, comments) %>%
+  anti_join(stop_words, by = "word") %>%
+  filter(
+    !str_detect(word, "^[0-9]+$"),
+    !word %in% c("istanbul", "airbnb", "stayed", "stay",
+                 "apartment", "host", "place", "room", "flat")
+  )
+
+review_words %>%
+  count(word, sort = TRUE) %>%
+  slice_head(n = 20) %>%
+  mutate(word = fct_reorder(word, n)) %>%
+  ggplot(aes(x = n, y = word, fill = n)) +
+  geom_col(show.legend = FALSE) +
+  scale_fill_viridis_c(option = "C") +
+  scale_x_continuous(labels = comma) +
+  labs(
+    title    = "Top 20 Words in Istanbul Airbnb Reviews",
+    subtitle = "Location and cleanliness are the most discussed attributes",
+    x = "Frequency", y = NULL,
+    caption = "Source: Inside Airbnb — Istanbul | Stop words removed"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+*Location* overwhelmingly dominates, followed by cleanliness (*clean*) and accessibility (*walk*, *metro*, *central*). This confirms that proximity to attractions and transit is Istanbul Airbnb's single most valued attribute.
+
+---
+
+## Summary
+
+Istanbul's Airbnb market is spatially concentrated, commercially maturing, and recovering strongly after COVID-19. Central tourist districts face the highest tourism pressure, while multi-listing hosts are capturing a growing share of supply. Future work could extend this analysis with Turkish-language sentiment analysis and a causal study of Airbnb's impact on long-term rental prices.

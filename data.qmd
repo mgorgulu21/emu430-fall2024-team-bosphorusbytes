@@ -1,5 +1,171 @@
 ---
 title: "Data"
+format:
+  html: default
+  pdf:
+    colorlinks: true
+    papersize: a4
+    fontsize: 11pt
+    margin-left: 2cm
+    margin-right: 2cm
+    margin-top: 2cm
+    margin-bottom: 2cm
 ---
 
-Data source: xxx
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, echo = TRUE)
+```
+
+## About the Dataset
+
+Our primary data source is the **Istanbul Airbnb dataset** published by [Inside Airbnb](http://insideairbnb.com/get-the-data), a mission-driven project that scrapes publicly available Airbnb listing information to promote transparency in the short-term rental market. The dataset is freely available and updated periodically.
+
+We work with three interconnected files:
+
+| File | Approx. Rows | Key Columns |
+|------|-------------|-------------|
+| `listings.csv` | ~20,000 | `id`, `neighbourhood_cleansed`, `room_type`, `price`, `host_id`, `host_is_superhost`, `review_scores_rating`, `latitude`, `longitude` |
+| `reviews.csv` | ~100,000+ | `listing_id`, `date`, `reviewer_id`, `comments` |
+| `calendar.csv` | millions | `listing_id`, `date`, `available`, `price` |
+
+We also use a **GeoJSON file** of Istanbul neighbourhood boundaries for choropleth maps, also sourced from Inside Airbnb.
+
+### Why This Dataset?
+
+Istanbul attracted over 20 million international visitors in recent years, making it one of the top tourist destinations globally. Airbnb has grown substantially in the city, but its spatial and economic impact on residents remains underexplored. This dataset allows us to track the geographic spread of tourism accommodation, understand pricing dynamics, measure the COVID-19 effect on the market, and evaluate whether the platform is increasingly dominated by professional operators.
+
+---
+
+## Data Import
+
+```{r load-libraries}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(scales)
+library(sf)
+library(knitr)
+library(kableExtra)
+```
+
+```{r import-data}
+# Load listings
+listings_raw <- read_csv("data/listings.csv", show_col_types = FALSE)
+
+# Load reviews
+reviews_raw <- read_csv("data/reviews.csv", show_col_types = FALSE)
+
+# Load calendar (large file — sample first 500k rows)
+calendar_raw <- read_csv("data/calendar.csv",
+                         n_max = 500000,
+                         show_col_types = FALSE)
+
+# Load GeoJSON neighbourhood boundaries
+neighbourhoods_geo <- st_read("data/neighbourhoods.geojson", quiet = TRUE)
+```
+
+---
+
+## Data Preprocessing
+
+### Listings
+
+The raw listings file contains 75+ columns. We keep only the columns relevant to our analyses and apply the following cleaning steps:
+
+1. **Price parsing:** The `price` column arrives as a character string (`$1,234.00`). We strip the dollar sign and commas, then convert to numeric.
+2. **Logical conversion:** `host_is_superhost` and `instant_bookable` are stored as `"t"`/`"f"` strings; we convert them to `TRUE`/`FALSE`.
+3. **Outlier removal:** Listings priced above \$2,000 or below \$5 per night are removed (< 0.5% of records).
+4. **NA handling:** Listings missing `price`, `neighbourhood_cleansed`, or `room_type` are dropped (< 2% of records).
+
+```{r clean-listings}
+listings <- listings_raw %>%
+  clean_names() %>%
+  select(
+    id, name, host_id, host_name, host_is_superhost,
+    neighbourhood_cleansed, latitude, longitude,
+    room_type, accommodates, bedrooms, bathrooms_text,
+    price, minimum_nights, number_of_reviews,
+    review_scores_rating, reviews_per_month,
+    calculated_host_listings_count, availability_365,
+    instant_bookable, last_review
+  ) %>%
+  mutate(
+    price             = as.numeric(str_replace_all(price, "[$,]", "")),
+    host_is_superhost = host_is_superhost == "t",
+    instant_bookable  = instant_bookable  == "t",
+    last_review       = ymd(last_review)
+  ) %>%
+  filter(
+    !is.na(price), !is.na(neighbourhood_cleansed), !is.na(room_type),
+    price >= 5, price <= 2000
+  )
+```
+
+### Reviews
+
+We parse the `date` column and extract `year` and `month` to enable time-series analysis.
+
+```{r clean-reviews}
+reviews <- reviews_raw %>%
+  clean_names() %>%
+  mutate(
+    date  = ymd(date),
+    year  = year(date),
+    month = month(date, label = TRUE)
+  ) %>%
+  filter(!is.na(date))
+```
+
+### Calendar
+
+We parse price and convert the availability flag to logical.
+
+```{r clean-calendar}
+calendar <- calendar_raw %>%
+  clean_names() %>%
+  mutate(
+    date      = ymd(date),
+    price     = as.numeric(str_replace_all(price, "[$,]", "")),
+    available = available == "t"
+  ) %>%
+  filter(!is.na(date))
+```
+
+---
+
+## Final Dataset Overview
+
+```{r dataset-summary}
+tibble(
+  Dataset = c("listings", "reviews", "calendar"),
+  Rows    = c(nrow(listings), nrow(reviews), nrow(calendar)),
+  Columns = c(ncol(listings), ncol(reviews), ncol(calendar))
+) %>%
+  kable(caption = "Cleaned dataset dimensions",
+        format.args = list(big.mark = ",")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
+```
+
+```{r glimpse-listings}
+glimpse(listings)
+```
+
+---
+
+## Save Final Dataset
+
+```{r save-rdata}
+save(listings, reviews, calendar, neighbourhoods_geo,
+     file = "data/istanbul_airbnb.RData")
+```
+
+📥 **Download the cleaned dataset:** [istanbul_airbnb.RData](data/istanbul_airbnb.RData)
+
+---
+
+## Data Limitations
+
+- The dataset reflects a **single scrape snapshot** for listings and calendar data; prices and availability change daily.
+- **Reviews are a proxy for bookings** — not every guest leaves a review.
+- `calendar.csv` is very large; we sampled 500,000 rows for performance.
+- Some listing descriptions contain Turkish characters that required careful encoding handling during text analysis.

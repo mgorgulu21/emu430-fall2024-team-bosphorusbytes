@@ -1,24 +1,56 @@
 ---
-title: "Team XXX"
-sidebar: false 
+title: "BosphorusBytes"
+sidebar: false
+format:
+  html:
+    toc: false
+  pdf:
+    colorlinks: true
+    papersize: a4
+    fontsize: 11pt
+    margin-left: 2cm
+    margin-right: 2cm
+    margin-top: 2cm
+    margin-bottom: 2cm
 ---
 
-This is our project webpage.
+# Istanbul Airbnb Analysis: How Short-Term Rentals Are Reshaping the City
 
-Please stay tuned to follow our project activities.
+---
 
-This is our template.
+## Team Members
 
-# Team Members
+| Name | Student ID |
+|------|-----------|
+| [Mevlüt Görgülü](https://github.com/) | 2210469027 |
+| [Sıla Nur Güney](https://github.com/) | 2210469060 |
+| [Aleyna Asiye Koç](https://github.com/) | 2210469076 |
+| [Melike Ebrar Şahinbay](https://github.com/) | 2210469077 |
 
-1.  [Edin_Džeko](https://tr.wikipedia.org/wiki/Edin_D%C5%BEeko)
+**Group:** BosphorusBytes &nbsp;|&nbsp; **Course:** EMU430 Data Analytics — 2024–2025 Fall &nbsp;|&nbsp; **GitHub:** [emu-hacettepe-analytics/BosphorusBytes](https://github.com/emu-hacettepe-analytics/emu430-fall2024-team-bosphorusbytes-3)
 
-2.  [Dušan Tadić](https://tr.wikipedia.org/wiki/Du%C5%A1an_Tadi%C4%87)
+---
 
-3.  [Frederico Rodrigues de Paula Santos](https://tr.wikipedia.org/wiki/Fred_(1993_do%C4%9Fumlu_futbolcu))
+## Project Description
 
-4.  [Sebastian Szymański](https://tr.wikipedia.org/wiki/Sebastian_Szyma%C5%84ski)
+Istanbul is one of the world's most-visited cities, and the rise of Airbnb has fundamentally changed its short-term rental landscape. This project analyses the **Istanbul Airbnb dataset** from [Inside Airbnb](http://insideairbnb.com) to uncover how short-term rentals are distributed across the city, what drives listing prices, how the market evolved over time (including through COVID-19), and what kind of tourism pressure individual neighbourhoods face.
 
-# Project Topic
+We combine **spatial mapping**, **regression modelling**, **time-series analysis**, **host profiling**, and **text analysis** to paint a comprehensive picture of Airbnb's footprint in Istanbul.
 
-# Data Set
+---
+
+## Key Takeaways
+
+- 🗺️ **Listings are heavily concentrated in tourist cores:** Beyoğlu, Şişli, and Fatih together account for over 45% of all Istanbul listings, while most outer districts have fewer than 100 listings each.
+
+- 💰 **Location and room type are the strongest price predictors:** Entire-home listings in central districts cost 2–3× more than private rooms in peripheral areas; superhost status adds a further 10–15% premium.
+
+- 📉 **COVID-19 caused a near-total booking collapse:** Monthly review counts — a reliable proxy for bookings — fell by ~85% between February and May 2020, with full recovery not achieved until mid-2022.
+
+- 🏠 **A small group of professional hosts controls a disproportionate share of supply:** The top 5% of hosts by listing count control over 30% of total listings, raising concerns about Airbnb's impact on housing availability.
+
+- 🔤 **Guest reviews highlight location above all else:** The words *location*, *clean*, and *walk* dominate reviews in central districts, while *quiet*, *local*, and *value* characterise peripheral ones.
+
+---
+
+*Navigate to the [Data](data.qmd) page to explore the dataset, or go straight to the [Analysis](analysis.qmd) for findings and visualisations.*
