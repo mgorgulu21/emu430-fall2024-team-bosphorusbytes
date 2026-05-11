@@ -1,17 +1,6 @@
 ---
 title: "BosphorusBytes"
 sidebar: false
-format:
-  html:
-    toc: false
-  pdf:
-    colorlinks: true
-    papersize: a4
-    fontsize: 11pt
-    margin-left: 2cm
-    margin-right: 2cm
-    margin-top: 2cm
-    margin-bottom: 2cm
 ---
 
 # Istanbul Airbnb Analysis: How Short-Term Rentals Are Reshaping the City
@@ -22,35 +11,33 @@ format:
 
 | Name | Student ID |
 |------|-----------|
-| [Mevlüt Görgülü](https://github.com/) | 2210469027 |
-| [Sıla Nur Güney](https://github.com/) | 2210469060 |
-| [Aleyna Asiye Koç](https://github.com/) | 2210469076 |
-| [Melike Ebrar Şahinbay](https://github.com/) | 2210469077 |
+| [Mevl??t G??rg??l??](https://github.com/) | 2210469027 |
+| [S??la Nur G??ney](https://github.com/) | 2210469060 |
+| [Aleyna Asiye Ko??](https://github.com/) | 2210469076 |
+| [Melike Ebrar ??ahinbay](https://github.com/) | 2210469077 |
 
-**Group:** BosphorusBytes &nbsp;|&nbsp; **Course:** EMU430 Data Analytics — 2024–2025 Fall &nbsp;|&nbsp; **GitHub:** [emu-hacettepe-analytics/BosphorusBytes](https://github.com/emu-hacettepe-analytics/emu430-fall2024-team-bosphorusbytes-3)
+**GitHub:** [emu-hacettepe-analytics/BosphorusBytes](https://github.com/emu-hacettepe-analytics/emu430-fall2024-team-bosphorusbytes-3)
 
 ---
 
 ## Project Description
 
-Istanbul is one of the world's most-visited cities, and the rise of Airbnb has fundamentally changed its short-term rental landscape. This project analyses the **Istanbul Airbnb dataset** from [Inside Airbnb](http://insideairbnb.com) to uncover how short-term rentals are distributed across the city, what drives listing prices, how the market evolved over time (including through COVID-19), and what kind of tourism pressure individual neighbourhoods face.
-
-We combine **spatial mapping**, **regression modelling**, **time-series analysis**, **host profiling**, and **text analysis** to paint a comprehensive picture of Airbnb's footprint in Istanbul.
+Istanbul is one of the world's most-visited cities, and the rise of Airbnb has fundamentally changed its short-term rental landscape. This project analyses the **Istanbul Airbnb dataset** from [Inside Airbnb](http://insideairbnb.com) to uncover how short-term rentals are distributed across the city, what drives listing prices, how the market evolved over time (including through COVID-19), and what tourism pressure individual neighbourhoods face.
 
 ---
 
 ## Key Takeaways
 
-- 🗺️ **Listings are heavily concentrated in tourist cores:** Beyoğlu, Şişli, and Fatih together account for over 45% of all Istanbul listings, while most outer districts have fewer than 100 listings each.
+- ??????? **Listings are heavily concentrated in tourist cores:** Beyo??lu, ??i??li, and Fatih together account for over 45% of all Istanbul listings.
 
-- 💰 **Location and room type are the strongest price predictors:** Entire-home listings in central districts cost 2–3× more than private rooms in peripheral areas; superhost status adds a further 10–15% premium.
+- ???? **Location and room type are the strongest price predictors:** Entire-home listings in central districts cost 2???3?? more than private rooms in peripheral areas.
 
-- 📉 **COVID-19 caused a near-total booking collapse:** Monthly review counts — a reliable proxy for bookings — fell by ~85% between February and May 2020, with full recovery not achieved until mid-2022.
+- ???? **COVID-19 caused a near-total booking collapse:** Monthly review counts fell ~85% between February and May 2020, with full recovery not until mid-2022.
 
-- 🏠 **A small group of professional hosts controls a disproportionate share of supply:** The top 5% of hosts by listing count control over 30% of total listings, raising concerns about Airbnb's impact on housing availability.
+- ???? **Professional hosts dominate supply:** The top 5% of hosts by listing count control over 30% of total listings.
 
-- 🔤 **Guest reviews highlight location above all else:** The words *location*, *clean*, and *walk* dominate reviews in central districts, while *quiet*, *local*, and *value* characterise peripheral ones.
+- ???? **Guests talk about location above all else:** The words *location*, *clean*, and *walk* dominate reviews in central districts.
 
 ---
 
-*Navigate to the [Data](data.qmd) page to explore the dataset, or go straight to the [Analysis](analysis.qmd) for findings and visualisations.*
+*Go to [Data](data.qmd) to explore the dataset, or [Analysis](analysis.qmd) for findings and visualisations.*

@@ -2,9 +2,9 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Team XXX",
+    "title": "BosphorusBytes",
     "section": "",
-    "text": "This is our project webpage.\nPlease stay tuned to follow our project activities.\nThis is our template.\n\nTeam Members\n\nEdin_Džeko\nDušan Tadić\nFrederico Rodrigues de Paula Santos\nSebastian Szymański\n\n\n\nProject Topic\n\n\nData Set\n\n\n\n\n Back to top"
+    "text": "Name\nStudent ID\n\n\n\n\nMevl??t G??rg??l??\n2210469027\n\n\nS??la Nur G??ney\n2210469060\n\n\nAleyna Asiye Ko??\n2210469076\n\n\nMelike Ebrar ??ahinbay\n2210469077\n\n\n\nGitHub: emu-hacettepe-analytics/BosphorusBytes\n\n\n\n\nIstanbul is one of the world’s most-visited cities, and the rise of Airbnb has fundamentally changed its short-term rental landscape. This project analyses the Istanbul Airbnb dataset from Inside Airbnb to uncover how short-term rentals are distributed across the city, what drives listing prices, how the market evolved over time (including through COVID-19), and what tourism pressure individual neighbourhoods face.\n\n\n\n\n\n??????? Listings are heavily concentrated in tourist cores: Beyo??lu, ??i??li, and Fatih together account for over 45% of all Istanbul listings.\n???? Location and room type are the strongest price predictors: Entire-home listings in central districts cost 2???3?? more than private rooms in peripheral areas.\n???? COVID-19 caused a near-total booking collapse: Monthly review counts fell ~85% between February and May 2020, with full recovery not until mid-2022.\n???? Professional hosts dominate supply: The top 5% of hosts by listing count control over 30% of total listings.\n???? Guests talk about location above all else: The words location, clean, and walk dominate reviews in central districts.\n\n\nGo to Data to explore the dataset, or Analysis for findings and visualisations."
   },
   {
     "objectID": "about.html",
@@ -26,5 +26,26 @@
     "title": "Data",
     "section": "",
     "text": "Data source: xxx\n\n\n\n Back to top"
+  },
+  {
+    "objectID": "index.html#team-members",
+    "href": "index.html#team-members",
+    "title": "BosphorusBytes",
+    "section": "",
+    "text": "Name\nStudent ID\n\n\n\n\nMevl??t G??rg??l??\n2210469027\n\n\nS??la Nur G??ney\n2210469060\n\n\nAleyna Asiye Ko??\n2210469076\n\n\nMelike Ebrar ??ahinbay\n2210469077\n\n\n\nGitHub: emu-hacettepe-analytics/BosphorusBytes"
+  },
+  {
+    "objectID": "index.html#project-description",
+    "href": "index.html#project-description",
+    "title": "BosphorusBytes",
+    "section": "",
+    "text": "Istanbul is one of the world’s most-visited cities, and the rise of Airbnb has fundamentally changed its short-term rental landscape. This project analyses the Istanbul Airbnb dataset from Inside Airbnb to uncover how short-term rentals are distributed across the city, what drives listing prices, how the market evolved over time (including through COVID-19), and what tourism pressure individual neighbourhoods face."
+  },
+  {
+    "objectID": "index.html#key-takeaways",
+    "href": "index.html#key-takeaways",
+    "title": "BosphorusBytes",
+    "section": "",
+    "text": "??????? Listings are heavily concentrated in tourist cores: Beyo??lu, ??i??li, and Fatih together account for over 45% of all Istanbul listings.\n???? Location and room type are the strongest price predictors: Entire-home listings in central districts cost 2???3?? more than private rooms in peripheral areas.\n???? COVID-19 caused a near-total booking collapse: Monthly review counts fell ~85% between February and May 2020, with full recovery not until mid-2022.\n???? Professional hosts dominate supply: The top 5% of hosts by listing count control over 30% of total listings.\n???? Guests talk about location above all else: The words location, clean, and walk dominate reviews in central districts.\n\n\nGo to Data to explore the dataset, or Analysis for findings and visualisations."
   }
 ]
